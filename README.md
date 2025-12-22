@@ -3,7 +3,7 @@
 
 ip-адрес: [http://95.163.227.14]
 
-frontend: [https://github.com/Starina-Lokich/Diploma_MyCloud]
+frontend: [https://github.com/Starina-Lokich/Diploma_MyCloud_frontend]
 
 
 
