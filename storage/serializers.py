@@ -4,6 +4,7 @@ from .models import File
 import os
 import uuid
 from django.conf import settings
+import re
 
 class FileSerializer(serializers.ModelSerializer):
     # user = serializers.SerializerMethodField()
@@ -30,17 +31,35 @@ class FileUploadSerializer(serializers.Serializer):
         if not hasattr(value, 'size'):
             raise serializers.ValidationError("Некорректный объект файла")
 
-        # Проверка размера файла ( 1 МБ)
-        max_size_mb = 1
+         # Конфигурируемый размер из settings.py
+        max_size_mb = getattr(settings, 'MAX_FILE_SIZE_MB', 10)  # По умолчанию 10MB
         max_size = max_size_mb * 1024 * 1024
 
         if value.size > max_size:
-            file_size_mb = value.size / (1024 * 1024)
-
+            file_size_mb = value.size / (1024 * 1024)            
             raise serializers.ValidationError(
                 f"Файл слишком большой ({file_size_mb:.2f} MB). "
                 f"Максимальный размер: {max_size_mb} MB"
             )
+
+        # Проверка MIME-типа
+        allowed_mime_types = getattr(settings, 'ALLOWED_MIME_TYPES', [
+            'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+            'application/pdf',
+            'text/plain', 'text/csv',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/zip',
+        ])
+
+        if hasattr(value, 'content_type') and value.content_type:
+            if value.content_type not in allowed_mime_types:
+                raise serializers.ValidationError(
+                    f"Тип файла '{value.content_type}' не разрешен"
+                )
+
         return value
 
     def create(self, validated_data):
@@ -51,9 +70,11 @@ class FileUploadSerializer(serializers.Serializer):
             user.storage_path = f"user_{user.id}/"
             user.save(update_fields=['storage_path'])
 
-        # Генерация уникального имени
+        # Безопасное имя файла
         original_name = uploaded_file.name
-        file_ext = os.path.splitext(original_name)[1]
+        # Удаляем опасные символы, оставляем только буквы, цифры, точки, дефисы, подчеркивания
+        safe_name = re.sub(r'[^\w\.-]', '_', original_name)
+        file_ext = os.path.splitext(safe_name)[1]
         unique_name = f"{uuid.uuid4()}{file_ext}"
 
         # Формирование пути: user_<ID>/<UUID>.<ext>
@@ -68,7 +89,7 @@ class FileUploadSerializer(serializers.Serializer):
             for chunk in uploaded_file.chunks():
                 destination.write(chunk)
 
-        # Создание объекта File
+        # Создание объекта File 
         file = File.objects.create(
             user=user,
             original_name=original_name,

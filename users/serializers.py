@@ -3,6 +3,7 @@ from .models import CustomUser
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
+import re
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -52,18 +53,51 @@ class UserRegisterSerializer(serializers.ModelSerializer): #
             'first_name': {'required': False},
             'last_name': {'required': False}
         }
+
+    def validate_email(self, value):
+    
+        # Регулярное выражение для email
+        email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_regex, value):
+            raise serializers.ValidationError(
+                "Введите корректный email адрес"
+            )
+        # Проверка уникальности
+        if CustomUser.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Email уже используется")
+        return value
+
     def validate_username(self, value):
         if CustomUser.objects.filter(username=value).exists():
             raise serializers.ValidationError("Имя пользователя уже занято.")
         return value
 
     def validate_password(self, value):
+    
+        # Проверка длины
+        if len(value) < 6:
+            raise serializers.ValidationError("Пароль должен содержать минимум 6 символов")
+        
+        # Проверка заглавной буквы
+        if not re.search(r'[A-Z]', value):
+            raise serializers.ValidationError("Пароль должен содержать хотя бы одну заглавную букву")
+        
+        # Проверка цифры
+        if not re.search(r'\d', value):
+            raise serializers.ValidationError("Пароль должен содержать хотя бы одну цифру")
+        
+        # Проверка специального символа
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', value):
+            raise serializers.ValidationError("Пароль должен содержать хотя бы один специальный символ (!@#$%^&* и т.д.)")
+        
+        # Также использовать стандартную валидацию Django
         from django.contrib.auth.password_validation import validate_password
-        validate_password(value)  # Встроенная валидация сложности пароля
+        validate_password(value)
+        
         return value
 
     def create(self, validated_data):
-        print("Validated data:", validated_data)
+        # print("Validated data:", validated_data)
         try:
             user = CustomUser.objects.create_user(
                 username=validated_data['username'],

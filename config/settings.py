@@ -73,20 +73,20 @@ CORS_ALLOW_METHODS = [
 
 # Настройки CSRF и сессий
 SESSION_COOKIE_HTTPONLY = not DEBUG
-# SESSION_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_SAMESITE = 'Lax'
 
 CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
 CSRF_USE_SESSIONS = False
-CSRF_COOKIE_HTTPONLY = False #
-# CSRF_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_HTTPONLY = True 
+CSRF_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SAMESITE = 'Lax'
 
 # Отключите параметры, связанные с HTTPS
-SESSION_COOKIE_SECURE = False
-CSRF_COOKIE_SECURE = False
-SECURE_SSL_REDIRECT = False
-SECURE_HSTS_SECONDS = 0
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+SECURE_SSL_REDIRECT = not DEBUG
+SECURE_HSTS_SECONDS = 31536000 if not DEBUG else 0
 
 # Application definition
 INSTALLED_APPS = [
@@ -164,6 +164,9 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
+    {
+        'NAME': 'users.validators.CustomPasswordValidator',
+    },
 ]
 
 
@@ -199,6 +202,19 @@ os.makedirs(STORAGE_PATH, exist_ok=True)  # Создание папки, есл�
 # Безопасное хеширование паролей
 PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
+]
+
+MAX_FILE_SIZE_MB = 10  # 10MB по умолчанию
+ALLOWED_MIME_TYPES = [
+    'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+    'application/pdf',
+    'text/plain', 'text/csv',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/zip', 'application/x-rar-compressed',
+    'audio/mpeg', 'video/mp4',
 ]
 
 # Доп. настройки
