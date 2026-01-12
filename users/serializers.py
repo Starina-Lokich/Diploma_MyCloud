@@ -28,19 +28,14 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'storage_path', 'total_file_size', 'formatted_total_file_size']
 
     def get_formatted_total_file_size(self, obj):
+        # Используем property из модели
         return obj.formatted_total_file_size
-
-    def get_total_file_size(self, obj):
-        request = self.context.get('request')
-        if request and request.user.is_admin:
-            return obj.formatted_total_file_size(as_string=True)
-        return obj.formatted_total_file_size(as_string=False)
 
     def get_file_count(self, obj):
         return obj.files.count()
 
 
-class UserRegisterSerializer(serializers.ModelSerializer): #
+class UserRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, style={'input_type': 'password'})
     first_name = serializers.CharField(required=False, allow_blank=True)
     last_name = serializers.CharField(required=False, allow_blank=True)
@@ -55,7 +50,6 @@ class UserRegisterSerializer(serializers.ModelSerializer): #
         }
 
     def validate_email(self, value):
-    
         # Регулярное выражение для email
         email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
         if not re.match(email_regex, value):
@@ -73,7 +67,6 @@ class UserRegisterSerializer(serializers.ModelSerializer): #
         return value
 
     def validate_password(self, value):
-    
         # Проверка длины
         if len(value) < 6:
             raise serializers.ValidationError("Пароль должен содержать минимум 6 символов")
@@ -91,13 +84,11 @@ class UserRegisterSerializer(serializers.ModelSerializer): #
             raise serializers.ValidationError("Пароль должен содержать хотя бы один специальный символ (!@#$%^&* и т.д.)")
         
         # Также использовать стандартную валидацию Django
-        from django.contrib.auth.password_validation import validate_password
         validate_password(value)
         
         return value
 
     def create(self, validated_data):
-        # print("Validated data:", validated_data)
         try:
             user = CustomUser.objects.create_user(
                 username=validated_data['username'],

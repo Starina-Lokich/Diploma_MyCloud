@@ -27,7 +27,7 @@ class CustomUser(AbstractUser):
         verbose_name='groups',
         blank=True,
         help_text='The groups this user belongs to.',
-        related_name='customuser_set',  # Уникальное имя для CustomUser
+        related_name='customuser_set',
         related_query_name='user',
     )
     user_permissions = models.ManyToManyField(
@@ -35,7 +35,7 @@ class CustomUser(AbstractUser):
         verbose_name='user permissions',
         blank=True,
         help_text='Specific permissions for this user.',
-        related_name='customuser_set',  # Уникальное имя для CustomUser
+        related_name='customuser_set',
         related_query_name='user',
     )
 
@@ -56,3 +56,6 @@ class CustomUser(AbstractUser):
                 return f"{total_size:.2f} {unit}"
             total_size /= 1024
         return f"{total_size:.2f} TB"
+
+    def __str__(self):
+        return f"{self.username} ({'admin' if self.is_admin else 'user'})"

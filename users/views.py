@@ -2,6 +2,7 @@ from django.contrib.auth import login, logout, authenticate
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils.decorators import method_decorator
 from django.db.models import Sum
+from django.shortcuts import get_object_or_404  # ДОБАВИТЬ
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -10,9 +11,6 @@ from .models import CustomUser
 from .serializers import UserSerializer, UserRegisterSerializer
 from django.middleware.csrf import get_token
 from django.http import JsonResponse
-from .permissions import IsAdminUser
-from django.views.decorators.csrf import ensure_csrf_cookie
-from django.utils.decorators import method_decorator
 
 @method_decorator(ensure_csrf_cookie, name='dispatch')
 class GetCSRFToken(APIView):
@@ -21,7 +19,6 @@ class GetCSRFToken(APIView):
         return Response({'detail': 'CSRF cookie set'})
 
 
-# @method_decorator(ensure_csrf_cookie, name='dispatch')
 class UserLoginView(APIView):
     permission_classes = [AllowAny]
 
@@ -32,9 +29,7 @@ class UserLoginView(APIView):
 
         if user is not None:
             login(request, user)
-            res = Response(UserSerializer(user).data)
-            print("Serialized data:", res)
-            return res
+            return Response(UserSerializer(user).data)  # УДАЛЕН print()
         return Response(
             {'error': 'Invalid credentials'},
             status=status.HTTP_401_UNAUTHORIZED
@@ -44,7 +39,7 @@ class UserLogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        logout(request)  # Уничтожаем сессию
+        logout(request)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 class CheckAuthView(APIView):
@@ -56,12 +51,12 @@ class CheckAuthView(APIView):
             "user": UserSerializer(request.user).data
         })
 
-class UserViewSet(viewsets.ModelViewSet): #
+class UserViewSet(viewsets.ModelViewSet):
     queryset = CustomUser.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-    def create(self, request, *args, **kwargs): #
+    def create(self, request, *args, **kwargs):
         try:
             return super().create(request, *args, **kwargs)
         except Exception as e:
@@ -71,25 +66,21 @@ class UserViewSet(viewsets.ModelViewSet): #
             )
 
     def get_queryset(self):
-        # Для обычных пользователей возвращаем только их профиль без подсчета
         if not self.request.user.is_admin:
             return CustomUser.objects.filter(id=self.request.user.id)
 
-        # Для администраторов добавляем аннотацию total_file_size
         return CustomUser.objects.annotate(
-            total_file_size=Sum('files__size', default=0)  # default=0 для пользователей без файлов
+            total_file_size=Sum('files__size', default=0)
         ).all()
 
 class UserRegistrationView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        print("Request ", request.data)
         serializer = UserRegisterSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
             login(request, user)
-
             return Response({
                 'user': UserSerializer(user).data,
             }, status=status.HTTP_201_CREATED)
@@ -104,3 +95,15 @@ class UserProfileView(APIView):
             "email": request.user.email,
             "is_admin": request.user.is_admin
         })
+
+# ДОБАВИТЬ этот класс
+class UserAdminToggleView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    
+    def patch(self, request, pk):
+        user = get_object_or_404(CustomUser, pk=pk)
+        is_admin = request.data.get('is_admin')
+        if is_admin is not None:
+            user.is_admin = is_admin
+            user.save()
+        return Response(UserSerializer(user).data)

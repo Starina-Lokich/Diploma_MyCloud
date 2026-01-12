@@ -18,13 +18,16 @@ Including another URLconf
 # from django.contrib import admin
 from django.urls import path
 from rest_framework.routers import DefaultRouter
-from .views import (UserViewSet,
-                    UserRegistrationView,
-                    UserLoginView,
-                    UserLogoutView,
-                    UserProfileView,
-                    CheckAuthView,
-                    GetCSRFToken)
+from .views import (
+    UserViewSet,
+    UserRegistrationView,
+    UserLoginView,
+    UserLogoutView,
+    UserProfileView,
+    CheckAuthView,
+    GetCSRFToken,
+    UserAdminToggleView  # ДОБАВИТЬ этот импорт
+)
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet, basename='user')
@@ -36,4 +39,6 @@ urlpatterns = [
     path('login/', UserLoginView.as_view(), name='user-login'),
     path('logout/', UserLogoutView.as_view(), name='user-logout'),
     path('profile/', UserProfileView.as_view(), name='user-profile'),
+    # ДОБАВИТЬ новый endpoint для переключения is_admin
+    path('users/<int:pk>/toggle_admin/', UserAdminToggleView.as_view(), name='user-toggle-admin'),
 ] + router.urls
