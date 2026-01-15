@@ -39,7 +39,7 @@ Node.js 18+ (для сборки фронтенда)
 ## Ограничения системы (System Limits)
 По умолчанию:
 
-Максимальный размер файла: 1 МБ
+Максимальный размер файла: 10 МБ
 
 (ограничение Django,
 можно изменить в File: storage/serializers.py и в конфигурационном файле Nginx )
@@ -186,14 +186,14 @@ http://ваш-ip/api/docs/
             ENVIRONMENT=production
             DEBUG=False
             SECRET_KEY=your_production_secret_key_here
-            ALLOWED_HOSTS=your_server_ip
+            ALLOWED_HOSTS=95.163.227.14,localhost,127.0.0.1
             DB_NAME=your_production_db_name
             DB_USER=your_production_db_user
             DB_PASSWORD=your_production_password
             DB_HOST=localhost
             DB_PORT=5432
             STORAGE_PATH=/home/django/my_cloud/backend/storage_files
-            CORS_ALLOWED_ORIGINS=http://ваш-ip,http://localhost:3000
+            CORS_ALLOWED_ORIGINS=http://95.163.227.14
 
       6.3.2. Файл `config/settings.py` настроен на универсальное использование, но если есть необходимость, отредактируйте:
 
@@ -318,7 +318,7 @@ http://ваш-ip/api/docs/
             server_name ваш-ip-адрес ваш-домен;
 
             # Ограничение размера загружаемых файлов (увеличьте, если необходимо)
-            client_max_body_size 1M;
+            client_max_body_size 10M;
 
             error_page 413 @413_json;
             location @413_json {
@@ -361,7 +361,8 @@ http://ваш-ip/api/docs/
                 proxy_set_header X-Forwarded-Proto $scheme;
 
                 # Дополнительная защита - очистка дублированных заголовков
-                proxy_set_header X-Forwarded-Host $server_name;proxy_set_header X-Original-Host "";
+                proxy_set_header X-Forwarded-Host $server_name;
+                proxy_set_header X-Original-Host "";
 
                 proxy_redirect off;
                 proxy_buffering off;
@@ -372,9 +373,6 @@ http://ваш-ip/api/docs/
                 proxy_read_timeout 300s;
                 send_timeout 300s;
 
-                #  добавьте поддержку CORS
-                add_header 'Access-Control-Allow-Origin' 'http://95.163.227.14' always;
-                add_header 'Access-Control-Allow-Credentials' 'true' always;
             }
 
             # Django admin
@@ -435,7 +433,7 @@ http://ваш-ip/api/docs/
           - Убедитесь, что проект загружается корректно.
           - Проверьте административную панель по адресу `http://ваш Ip/admin`.
 
-11. Команды запуска приложения на VSR ip 95.163.227.14:
+11. Команды запуска приложения на VPS ip 95.163.227.14:
     win + R
     wsl
 
