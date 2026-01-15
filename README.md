@@ -52,7 +52,7 @@ http://ваш-ip/api/docs/
 
 
 ## Схема проекта:
-/var/www/my_cloud/
+/home/django/my_cloud/
 
 ├── backend/
 
@@ -192,8 +192,7 @@ http://ваш-ip/api/docs/
             DB_PASSWORD=your_production_password
             DB_HOST=localhost
             DB_PORT=5432
-            STORAGE_PATH=/var/www/my_cloud/storage_files
-                # /home/django/my_cloud/storage_files
+            STORAGE_PATH=/home/django/my_cloud/backend/storage_files
             CORS_ALLOWED_ORIGINS=http://ваш-ip,http://localhost:3000
 
       6.3.2. Файл `config/settings.py` настроен на универсальное использование, но если есть необходимость, отредактируйте:
@@ -241,8 +240,9 @@ http://ваш-ip/api/docs/
 
             ExecStart=/home/django/my_cloud/backend/venv/bin/gunicorn \
                     --workers 3 \
-                    --bind': 'unix:/home/django/my_cloud/backend/gunicorn.sock'
-                    --forwarded-allow-ips="*"\                      --access-logfile - \
+                    --bind=unix:/home/django/my_cloud/backend/gunicorn.sock \
+                    --forwarded-allow-ips="*" \
+                    --access-logfile - \
                     config.wsgi:application
 
             Restart=always
@@ -279,7 +279,7 @@ http://ваш-ip/api/docs/
 
       В терминале (на локальной машине):
 
-        scp -r dist/* root@ваш-ip:/home/django/my_cloud/frontend/dist
+        scp -r dist/* django@ваш_ip:/home/django/my_cloud/frontend/dist/
 
 
     8.4. Создание .env.production в папке /home/django/my_cloud/frontend:
@@ -327,7 +327,7 @@ http://ваш-ip/api/docs/
             }
 
             # Корень для фронтенда
-            root /var/www/my_cloud/frontend/dist;
+            root /home/django/my_cloud/frontend/dist;
 
             # Статика фронтенда
             location / {
@@ -339,14 +339,14 @@ http://ваш-ip/api/docs/
 
             # Статика Django (admin, DRF)
             location /static/ {
-                alias /var/www/my_cloud/backend/staticfiles/;
+                alias /home/django/my_cloud/backend/staticfiles/;
                 expires 30d;
                 access_log off;
             }
 
             # Медиафайлы (загруженные пользователями)
             location /storage/ {
-                alias /var/www/my_cloud/backend/storage_files/;
+                alias /home/django/my_cloud/backend/storage_files/;
                 expires 30d;
                 access_log off;
             }
@@ -379,16 +379,16 @@ http://ваш-ip/api/docs/
 
             # Django admin
             location /admin/ {
-                include proxy_params;
-                proxy_pass http://unix:/var/www/my_cloud/backend/gunicorn.sock;
-                (или proxy_pass http://unix:/tmp/gunicorn.sock;)
+                proxy_pass http://unix:/home/django/my_cloud/backend/gunicorn.sock;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
             }
 
             # Health check endpoint
             location /health/ {
-                include proxy_params;
-                proxy_pass http://unix:/var/www/my_cloud/backend/gunicorn.sock;
-                (или proxy_pass http://unix:/tmp/gunicorn.sock;)
+                proxy_pass http://unix:/home/django/my_cloud/backend/gunicorn.sock;
+                proxy_set_header Host $host;
+                return 200 'OK';
             }
 
             # Обработка ошибок
@@ -472,3 +472,12 @@ http://ваш-ip/api/docs/
 ```
 
 
+## 📞 Для проверяющего:
+
+Проект состоит из двух репозиториев:
+1. **Backend (этот репозиторий):** https://github.com/Starina-Lokich/Diploma_MyCloud
+2. **Frontend (отдельный репозиторий):** https://github.com/Starina-Lokich/Diploma_MyCloud_frontend
+
+Развернутое приложение доступно по адресу: http://95.163.227.14
+
+Логин/пароль администратора предоставляются по запросу.
