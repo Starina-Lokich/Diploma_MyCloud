@@ -323,7 +323,7 @@ http://ваш-ip/api/docs/
             error_page 413 @413_json;
             location @413_json {
                 add_header Content-Type application/json;
-                return 413 '{"file": ["Файл слишком большой (превышает 1 MB). Максимальный размер: 1 MB"]}';
+                return 413 '{"file": ["Файл слишком большой (превышает 10 MB). Максимальный размер: 10 MB"]}';
             }
 
             # Корень для фронтенда
